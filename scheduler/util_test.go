@@ -27,6 +27,94 @@ func TestMaterializeTaskGroups(t *testing.T) {
 	}
 }
 
+func newNode(name string) *structs.Node {
+	n := mock.Node()
+	n.Name = name
+	return n
+}
+
+func TestDiffSystemAllocsForNode_Sysbatch_terminal(t *testing.T) {
+	// For a sysbatch job, the scheduler should not re-place an allocation
+	// that has become terminal.
+
+	job := mock.SystemBatchJob()
+	required := materializeTaskGroups(job)
+
+	oldJob := new(structs.Job)
+	*oldJob = *job
+	oldJob.JobModifyIndex -= 1
+
+	eligible := map[string]*structs.Node{
+		"node1": newNode("node1"), // running
+		"node2": newNode("node2"), // terminal
+		"node3": newNode("node3"), // running outdated
+		"node4": newNode("node4"), // dead node
+		"node5": newNode("node5"), // unplaced
+	}
+
+	live := []*structs.Allocation{{
+		ID:     uuid.Generate(),
+		NodeID: "node1",
+		Name:   "my-sysbatch.ping[0]",
+		Job:    job, // running
+	}, {
+		ID:     uuid.Generate(),
+		NodeID: "node3",
+		Name:   "my-sysbatch.ping[0]",
+		Job:    oldJob, // update
+	}, {
+		ID:     uuid.Generate(),
+		NodeID: "node5",
+		Name:   "my-sysbatch.ping[0]",
+		Job:    job, // running
+	}}
+
+	tainted := map[string]*structs.Node{
+		"dead": eligible["node4"],
+	}
+
+	terminalNode2 := map[string]*structs.Allocation{
+		"my-sysbatch.ping[0]": &structs.Allocation{
+			ID:     uuid.Generate(),
+			NodeID: "node2",
+			Name:   "my-sysbatch.ping[0]",
+			Job:    job,
+		},
+	}
+
+	diffNode2 := diffSystemAllocsForNode(job, "node2", eligible, tainted, required, live, terminalNode2)
+	require.Equal(t, &diffResult{}, diffNode2)
+
+	//// We should update the first alloc
+	//require.True(t, len(update) == 1 && update[0].Alloc == allocs[0])
+	//
+	//// We should ignore the second alloc
+	//require.True(t, len(ignore) == 1 && ignore[0].Alloc == allocs[1])
+	//
+	//// We should stop the 3rd alloc
+	//require.True(t, len(stop) == 1 && stop[0].Alloc == allocs[2])
+	//
+	//// We should migrate the 4rd alloc
+	//require.True(t, len(migrate) == 1 && migrate[0].Alloc == allocs[3])
+	//
+	//// We should mark the 5th alloc as lost
+	//require.True(t, len(lost) == 1 && lost[0].Alloc == allocs[4])
+	//
+	//// We should place 6
+	//require.Equal(t, 6, len(place))
+	//
+	//// Ensure that the allocations which are replacements of terminal allocs are
+	//// annotated
+	//for name, alloc := range terminalAllocs {
+	//	for _, allocTuple := range diff.place {
+	//		if name == allocTuple.Name {
+	//			require.True(t, reflect.DeepEqual(alloc, allocTuple.Alloc),
+	//				"expected: %#v, actual: %#v", alloc, allocTuple.Alloc)
+	//		}
+	//	}
+	//}
+}
+
 func TestDiffSystemAllocsForNode(t *testing.T) {
 	job := mock.Job()
 	required := materializeTaskGroups(job)
