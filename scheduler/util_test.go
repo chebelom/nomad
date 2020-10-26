@@ -39,51 +39,37 @@ func TestDiffSystemAllocsForNode_Sysbatch_terminal(t *testing.T) {
 
 	job := mock.SystemBatchJob()
 	required := materializeTaskGroups(job)
+	fmt.Println("required:", required)
 
 	oldJob := new(structs.Job)
 	*oldJob = *job
 	oldJob.JobModifyIndex -= 1
 
 	eligible := map[string]*structs.Node{
-		"node1": newNode("node1"), // running
-		"node2": newNode("node2"), // terminal
-		"node3": newNode("node3"), // running outdated
-		"node4": newNode("node4"), // dead node
-		"node5": newNode("node5"), // unplaced
+		"node1": newNode("node1"),
 	}
 
-	live := []*structs.Allocation{{
-		ID:     uuid.Generate(),
-		NodeID: "node1",
-		Name:   "my-sysbatch.ping[0]",
-		Job:    job, // running
-	}, {
-		ID:     uuid.Generate(),
-		NodeID: "node3",
-		Name:   "my-sysbatch.ping[0]",
-		Job:    oldJob, // update
-	}, {
-		ID:     uuid.Generate(),
-		NodeID: "node5",
-		Name:   "my-sysbatch.ping[0]",
-		Job:    job, // running
-	}}
+	var live []*structs.Allocation // empty
 
-	tainted := map[string]*structs.Node{
-		"dead": eligible["node4"],
-	}
+	tainted := map[string]*structs.Node(nil)
 
-	terminalNode2 := map[string]*structs.Allocation{
-		"my-sysbatch.ping[0]": &structs.Allocation{
+	terminal := map[string]*structs.Allocation{
+		"my-sysbatch.pings[0]": &structs.Allocation{
 			ID:     uuid.Generate(),
-			NodeID: "node2",
-			Name:   "my-sysbatch.ping[0]",
+			NodeID: "node1",
+			Name:   "my-sysbatch.pings[0]",
 			Job:    job,
 		},
 	}
 
-	diffNode2 := diffSystemAllocsForNode(job, "node2", eligible, tainted, required, live, terminalNode2)
-	require.Equal(t, &diffResult{}, diffNode2)
+	diff := diffSystemAllocsForNode(job, "node1", eligible, tainted, required, live, terminal)
+	require.Empty(t, diff.place)
+	require.Empty(t, diff.update)
+	require.Empty(t, diff.stop)
+	require.Empty(t, diff.migrate)
+	require.Empty(t, diff.lost)
+	fmt.Println("diff.ignore:", diff.ignore)
+	require.True(t, len(diff.ignore) == 1 && diff.ignore[0].Alloc == terminal["my-sysbatch.pings[0]"])
 
 	//// We should update the first alloc
 	//require.True(t, len(update) == 1 && update[0].Alloc == allocs[0])

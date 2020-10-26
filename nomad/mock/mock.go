@@ -189,7 +189,8 @@ func SystemBatchJob() *structs.Job {
 			},
 		},
 		TaskGroups: []*structs.TaskGroup{{
-			Name: "pings",
+			Count: 1,
+			Name:  "pings",
 			Tasks: []*structs.Task{{
 				Name:   "ping-example",
 				Driver: "exec",

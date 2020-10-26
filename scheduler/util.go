@@ -85,7 +85,7 @@ func diffSystemAllocsForNode(
 	fmt.Println("SH.dsafn, node:", nodeID, "job:", job.Name, "type:", job.Type)
 
 	for tAllocName, tAlloc := range terminalAllocs {
-		fmt.Println("  terminal alloc:", tAllocName, "status", tAlloc.ClientStatus, "terminal", tAlloc.TerminalStatus())
+		fmt.Println("  terminal alloc:", tAllocName, "status:", tAlloc.ClientStatus, "terminal:", tAlloc.TerminalStatus())
 	}
 
 	// Scan the existing updates
