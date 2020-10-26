@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var _ SinkDelegate = &serverDelegate{}
+var _ SinkDelegate = &Server{}
 
 type testDelegate struct{ s *state.StateStore }
 
