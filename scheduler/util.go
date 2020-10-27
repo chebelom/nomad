@@ -189,16 +189,31 @@ func diffSystemAllocsForNode(
 	// Scan the required groups
 	for name, tg := range required {
 
+		// todo bug: job updates are ignored
 		// Check for a terminal sysbatch allocation, which should be not placed
 		// again.
 		if job.Type == structs.JobTypeSysBatch {
-			if _, ok := terminalAllocs[name]; ok {
-				result.ignore = append(result.ignore, allocTuple{
-					Name:      name,
-					TaskGroup: tg,
-					Alloc:     terminalAllocs[name],
-				})
-				fmt.Println("SH.dsafn ignore terminal:", name)
+			if alloc, ok := terminalAllocs[name]; ok {
+				// the alloc is terminal, but now the job has been updated
+				if job.JobModifyIndex != alloc.Job.JobModifyIndex {
+					fmt.Println("SH.dsafn update because job, name:", name)
+					fmt.Println("  !! nodeID:", nodeID, "alloc.nodeID:", alloc.NodeID)
+					replaceable := alloc.Copy() // we do not have the original
+					replaceable.NodeID = nodeID
+					result.update = append(result.update, allocTuple{
+						Name:      name,
+						TaskGroup: tg,
+						Alloc:     replaceable,
+					})
+				} else {
+					fmt.Println("SH.dsafn ignore because terminal:", name)
+					// alloc is terminal and job unchanged, leave it alone
+					result.ignore = append(result.ignore, allocTuple{
+						Name:      name,
+						TaskGroup: tg,
+						Alloc:     alloc,
+					})
+				}
 				continue
 			}
 		}

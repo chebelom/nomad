@@ -68,37 +68,7 @@ func TestDiffSystemAllocsForNode_Sysbatch_terminal(t *testing.T) {
 	require.Empty(t, diff.stop)
 	require.Empty(t, diff.migrate)
 	require.Empty(t, diff.lost)
-	fmt.Println("diff.ignore:", diff.ignore)
 	require.True(t, len(diff.ignore) == 1 && diff.ignore[0].Alloc == terminal["my-sysbatch.pings[0]"])
-
-	//// We should update the first alloc
-	//require.True(t, len(update) == 1 && update[0].Alloc == allocs[0])
-	//
-	//// We should ignore the second alloc
-	//require.True(t, len(ignore) == 1 && ignore[0].Alloc == allocs[1])
-	//
-	//// We should stop the 3rd alloc
-	//require.True(t, len(stop) == 1 && stop[0].Alloc == allocs[2])
-	//
-	//// We should migrate the 4rd alloc
-	//require.True(t, len(migrate) == 1 && migrate[0].Alloc == allocs[3])
-	//
-	//// We should mark the 5th alloc as lost
-	//require.True(t, len(lost) == 1 && lost[0].Alloc == allocs[4])
-	//
-	//// We should place 6
-	//require.Equal(t, 6, len(place))
-	//
-	//// Ensure that the allocations which are replacements of terminal allocs are
-	//// annotated
-	//for name, alloc := range terminalAllocs {
-	//	for _, allocTuple := range diff.place {
-	//		if name == allocTuple.Name {
-	//			require.True(t, reflect.DeepEqual(alloc, allocTuple.Alloc),
-	//				"expected: %#v, actual: %#v", alloc, allocTuple.Alloc)
-	//		}
-	//	}
-	//}
 }
 
 func TestDiffSystemAllocsForNode(t *testing.T) {
