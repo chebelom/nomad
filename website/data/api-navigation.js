@@ -34,6 +34,7 @@ export default [
   'status',
   'system',
   'ui',
+  'test',
   'validate',
   'volumes',
 ]
